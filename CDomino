@@ -1,0 +1,168 @@
+//CS350
+//Project #2 Event Handling
+//Janet Ruppert
+
+import java.awt.Color;
+import java.awt.Graphics;
+
+public class CDomino
+{
+	private int X;
+	private int Y;
+	private int width;
+	private int height;
+	private int dots;
+	private double[] Xs;
+	private double[] Ys;
+	private int rotIndex;
+	
+	public CDomino(int x, int y, int w, int numSpots, int numSpots1)				//constructor with parameters
+	{
+    	X = x;
+    	Y= y;
+    	width = x + w;
+    	height = y + 2 * w;
+    	dots = numSpots + numSpots1;
+    	Xs = new double[dots];
+    	Ys = new double[dots];
+    	rotIndex=0;
+
+    	int index = 0;  															// index of which dot slot you're filling in
+    	int borderwidth = 6; 														// width of the border around the dot pattern
+    	int change = (w - 2 * borderwidth)/2; //
+   	 
+    	for(int i = 0; i < 3; i++)
+    	{
+        	for(int j = 0; j < 3; j++)
+            	if(spotMatrix[numSpots][i][j] == 1)
+            	{
+                	Xs[index] = x + borderwidth + j * change;
+                	Ys[index] = y + borderwidth + i * change;
+                	index++;
+            	}
+    	}
+
+    	for(int i = 0; i < 3; i++)
+    	{
+        	for(int j = 0; j < 3; j++)	{
+            	if(spotMatrix[numSpots1][i][j] == 1)
+            	{
+                	Xs[index] = x + borderwidth + j * change;
+                	Ys[index] = y + w + borderwidth + i * change;
+                	index++;
+            	}
+        	}
+    	}
+	}
+    
+	public CDomino(CDomino src) {													//copy constructor
+    	X = src.X;
+    	Y= src.Y;
+    	width = src.width;
+    	height = src.height;
+    	dots = src.dots;
+    	Xs = src.Xs;
+    	Ys = src.Ys;
+    	rotIndex=src.rotIndex;   	 
+	}
+    
+	public void draw(Graphics g)	{												//draws CDomino tile with Graphics
+    	g.setColor(Color.MAGENTA);													//pretty in pink
+    	g.fillRect(X, Y, width - X, height - Y);									//draws rectangle
+    	g.setColor(Color.black);													//black for contrast
+    	
+    	for(int i = 0; i < dots; i++)	{											//draws dots
+        	g.fillOval((int)Xs[i] - 3, (int)Ys[i] - 3, 6, 6);
+    	}
+   	 
+    	if(height - Y > width - X)	{												//when tiles are sideways
+        	g.drawLine(X, this.centerheight(), width, this.centerheight());
+    	}
+        
+    	else
+        	g.drawLine(this.centerwidth(), Y, this.centerwidth(), height);   	 
+    	
+    	g.setColor(Color.black);    	
+    	g.drawRect(X, Y, width - X, height - Y);									//draws domino border
+	}
+
+	public boolean isInside(int x, int y)	{										//checks whether point x, y is inside the tile
+    	return x >= X && x < width && y >= Y && y < height;
+	}
+	
+	public void translate(int dx, int dy)	{										//changes tile's position by dx, dy amount
+    	X += dx;
+    	Y += dy;
+    	width += dx;
+    	height += dy;
+    	for(int i = 0; i < (int)dots; i++)
+    	{
+        	Xs[i] += dx;
+        	Ys[i] += dy;
+    	}
+	}
+	
+	public void rotate(int xp, int yp)	{											//rotates domino about point xp, yp for -90 deg
+		double val1 = xp + (Y - yp);
+	    Y = yp - (X - xp);
+	    X = (int) val1;
+	    double val2 = xp + (height - yp);
+	    height = yp - (width - xp);
+	    width = (int) val2;
+	    
+		switch(rotIndex%4)	{														//rotates the tile to one of its four potential positions
+		case(0):	{
+			int j = Y;
+	        Y = height;
+		    height = j;
+	        rotIndex++;
+	        break;
+		}    
+		case(1):	{	
+			int jk = Y;	        
+			Y = height;	        
+			height = jk;
+			rotIndex++;
+			break;
+		}
+		case(2):	{	
+			int jkl = Y;	     
+			Y = height;	        
+			height = jkl;	        
+			rotIndex++;	        
+			break;	        
+		}
+		case(3):	{	
+			int jklm = Y;	        
+			Y = height;	        
+			height = jklm;	        
+			rotIndex++;
+	        break;	        
+		}
+	        }
+	        
+		for(int i = 0; i < dots; i++)												//flips dots as well
+		{
+			val2 = xp + (Ys[i] - yp);
+			Ys[i] = yp - (Xs[i] - xp);
+			Xs[i] = val2;   
+		}    
+	}
+
+	public int centerwidth() {														//returns center value of a particular domino's width
+    	return (X + width) / 2;
+	}
+
+	public int centerheight() { 													//returns center value of a particular domino's height
+    	return (Y + height) / 2;
+	}
+
+	int spotMatrix[][][] = {														//sets places for spots on domino heads and tails
+        	{{0, 0, 0}, {0, 0, 0}, {0, 0, 0}},	//blank domino head or tail
+        	{{0, 0, 0}, {0, 1, 0}, {0, 0, 0}},	//1
+        	{{1, 0, 0}, {0, 0, 0}, {0, 0, 1}},	//2
+        	{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}},	//3
+        	{{1, 0, 1}, {0, 0, 0}, {1, 0, 1}},	//4
+        	{{1, 0, 1}, {0, 1, 0}, {1, 0, 1}},	//5
+        	{{1, 0, 1}, {1, 0, 1}, {1, 0, 1}}};	//6
+}	//end CDomino class
