@@ -1,0 +1,237 @@
+//CS350
+//Project #2 Event Handling
+//Janet Ruppert
+
+import java.awt.*;
+import java.awt.event.*;
+import java.util.Random;
+import java.util.ArrayList;
+import javax.swing.JPanel;
+
+public class DominoesPanel extends JPanel
+	implements KeyListener, MouseListener, MouseMotionListener
+{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private ArrayList<CDomino> player1;					//tiles in player1's hand
+	private ArrayList<CDomino> player2; 				//tiles in player2's hand
+	private ArrayList<CDomino> table;					//active tiles
+    
+	boolean isInitialized;								//graphics pre-set
+	private Image backBuffer;
+	private Graphics gBackBuffer;   
+	private int line1;									//dividing lines for board
+	private int line2;
+    
+	private int m_nOffsetX;								//event handling pre-set
+	private int m_nOffsetY;
+	private CDomino dominotobemoved;
+    
+	
+	public DominoesPanel()	{							//init and register mouse event handler
+    	isInitialized = false;
+    	setFocusable(true);
+    	addKeyListener(this);
+    	addMouseListener(this);
+    	addMouseMotionListener(this);
+	}
+
+	private void init()	{ 								//define up the initial state after the panel is created
+		int py = 5, px = 37;
+    	int spacing = getSize().width / 14;
+    	
+    	line1 = 75;
+    	line2 = getSize().height - line1;
+    	
+    	ArrayList<CDomino> dominolist = new ArrayList<CDomino>();		//list of all possible domino tiles
+    	for(int i = 0; i <= 6; i++)
+    	{
+        	for(int j = i; j <= 6; j++)	{
+            	dominolist.add(new CDomino(0, 0, 30, i, j));
+        	}
+    	}
+
+    	Random drawTiles = new Random();				//chooses random tile
+   	 
+    	player1 = new ArrayList<CDomino>();
+    	for(int i = 0; i <=6; i++)	{					//adds 7 tiles to player1's hand
+        	int index = drawTiles.nextInt(dominolist.size());
+        	CDomino targettile = (CDomino)dominolist.get(index);
+        	dominolist.remove(index);
+        	player1.add(targettile);
+        	targettile.translate(px + i * (2*spacing), py);
+    	}
+
+    	player2 = new ArrayList<CDomino>();	
+    	for(int i = 0; i <= 6; i++)	{					//adds 7 tiles to player2's hand
+        	int index = drawTiles.nextInt(dominolist.size());
+        	CDomino targettile = (CDomino)dominolist.get(index);
+        	dominolist.remove(index);
+        	player2.add(targettile);
+        	targettile.translate(px + i * (2*spacing), line2 + py);
+    	}
+
+    	backBuffer = createImage(getSize().width, getSize().height);	//sets up board
+    	gBackBuffer = backBuffer.getGraphics();
+    	table = new ArrayList<CDomino>();
+    	dominotobemoved = null;
+	}
+
+	public void paintComponent(Graphics g)	{ 			//state presentation, using double buffers
+    	if(!isInitialized)
+    	{
+        	isInitialized = true;
+        	init();
+    	}
+    
+    	gBackBuffer.setColor(Color.white);
+    	gBackBuffer.clearRect(0, 0, getSize().width, getSize().height);
+
+    	for(int i = 0; i < player1.size(); i++)	{
+        	((CDomino)player1.get(i)).draw(gBackBuffer);
+    	}
+        	
+    	for(int i = 0; i < player2.size(); i++)	{
+        	((CDomino)player2.get(i)).draw(gBackBuffer);
+    	}
+        	
+    	for(int i = 0; i < table.size(); i++)	{
+   		 ((CDomino)table.get(i)).draw(gBackBuffer);
+    	}
+   	 
+    	gBackBuffer.setColor(Color.black);
+    	gBackBuffer.drawLine(0, line1, getSize().width, line1);
+    	gBackBuffer.drawLine(0, line2, getSize().width, line2);
+    	g.drawImage(backBuffer, 0, 0, null);
+	}
+
+	public void mousePressed(MouseEvent e)				//moves tiles around
+	{
+    	if(e.isMetaDown())
+        	return;
+    	for(int i = table.size() - 1; i >= 0; i--)
+    	{
+        	CDomino targettile = (CDomino)table.get(i);
+        	if(targettile.isInside(e.getX(), e.getY()))
+        	{
+            	m_nOffsetX = e.getX();
+            	m_nOffsetY = e.getY();
+            	table.remove(i);
+            	table.add(targettile);
+            	dominotobemoved = targettile;
+            	repaint();
+            	return;
+        	}
+    	}
+
+    	for(int i = player1.size() - 1; i >= 0; i--)
+    	{
+        	CDomino targettile = (CDomino)player1.get(i);
+        	if(targettile.isInside(e.getX(), e.getY()))
+        	{
+            	m_nOffsetX = e.getX();
+            	m_nOffsetY = e.getY();
+            	player1.remove(i);
+            	table.add(targettile);
+            	dominotobemoved = targettile;
+            	repaint();
+            	return;
+        	}
+    	}
+
+    	for(int i = player2.size() - 1; i >= 0; i--)
+    	{
+        	CDomino targettile = (CDomino)player2.get(i);
+        	if(targettile.isInside(e.getX(), e.getY()))
+        	{
+        		m_nOffsetX = e.getX();
+            	m_nOffsetY = e.getY();
+            	player2.remove(i);
+            	table.add(targettile);
+            	dominotobemoved = targettile;
+            	repaint();
+            	return;
+        	}
+    	}
+
+	}
+    
+	public void mouseClicked(MouseEvent e)				//call to rotate tiles
+	{
+    	if(!e.isMetaDown())
+        	return;
+    	
+    	for(int i = table.size() - 1; i >= 0; i--)
+    	{
+        	CDomino targettile = (CDomino)table.get(i);
+        	if(targettile.isInside(e.getX(), e.getY()))
+        	{
+            	targettile.rotate(targettile.centerwidth(), targettile.centerheight());
+            	table.remove(i);
+            	table.add(targettile);
+            	repaint();
+            	return;
+        	}
+    	}
+
+    	for(int i = player1.size() - 1; i >= 0; i--)
+    	{
+        	CDomino targettile = (CDomino)player1.get(i);
+        	if(targettile.isInside(e.getX(), e.getY()))
+        	{
+            	player1.remove(i);
+            	player1.add(targettile);
+            	targettile.rotate(targettile.centerwidth(), targettile.centerheight());
+            	repaint();
+            	return;
+        	}
+    	}
+
+    	for(int i = player2.size() - 1; i >= 0; i--)
+    	{
+        	CDomino targettile = (CDomino)player2.get(i);
+        	if(targettile.isInside(e.getX(), e.getY()))
+        	{
+            	player2.remove(i);
+            	player2.add(targettile);
+            	targettile.rotate(targettile.centerwidth(), targettile.centerheight());
+            	repaint();
+            	return;
+        	}
+    	}
+
+	}
+
+	public void mouseReleased(MouseEvent e)				//no domino tile selected
+	{
+    	dominotobemoved = null;					
+	}
+
+	public void mouseDragged(MouseEvent e)	{			//drag tile around screen
+    	if(e.isMetaDown())    return;
+   	 
+    	if(dominotobemoved != null) {
+        	dominotobemoved.translate(e.getX()-m_nOffsetX, e.getY()-m_nOffsetY);
+        	m_nOffsetX = e.getX();
+        	m_nOffsetY = e.getY();
+        	repaint();
+    	}
+	}
+
+	public void keyReleased(KeyEvent e)	{				//reset by pressing <R>
+    	if(e.getKeyCode() == 82)
+    	{
+        	init();
+        	repaint();
+    	}
+	}
+
+	public void keyPressed(KeyEvent keyevent){ }		//unused references
+	public void keyTyped(KeyEvent keyevent)	{ }
+	public void mouseEntered(MouseEvent mouseevent){ }
+	public void mouseExited(MouseEvent mouseevent){ }
+	public void mouseMoved(MouseEvent mouseevent){ }
+	
+}	//end DominoesPanel class
