@@ -1,0 +1,20 @@
+//CS350
+//Project #2 Event Handling
+//Janet Ruppert
+
+import javax.swing.JFrame;
+
+public class PlayDominoes
+{
+   public static void main( String[] args )
+   { 
+      JFrame application = new JFrame( "Dominoes" );	//launches game
+      
+      DominoesPanel dominoesPanel = new DominoesPanel();
+      application.add(dominoesPanel);
+  
+      application.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+      application.setSize( 800, 540 ); // set frame size
+      application.setVisible( true ); // display frame
+   }
+}	//end PlayDominoes class
